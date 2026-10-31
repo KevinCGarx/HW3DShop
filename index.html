@@ -1,0 +1,2459 @@
+<!doctype html>
+<html lang="en" class="dark scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ApexSpeed 3D | Taller de Impresión 3D y Piezas de Carros</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              dark: {
+                900: "#090B10",
+                800: "#10141E",
+                700: "#1A202C",
+                600: "#2D3748",
+              },
+              cyan: {
+                400: "#00E5FF",
+                500: "#00F0FF",
+                glowing: "#00f2ff",
+              },
+              hotwheels: {
+                orange: "#FF5500",
+                yellow: "#FFD700",
+                red: "#E60000",
+                blue: "#0055FF",
+              },
+            },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+              mono: ["JetBrains Mono", "monospace"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #090b10;
+        color: #f3f4f6;
+        overflow-x: hidden;
+      }
+      .font-mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* Custom Glassmorphism */
+      .glass-panel {
+        background: rgba(16, 20, 30, 0.75);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 85, 0, 0.15);
+      }
+      .glass-panel-hover {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .glass-panel-hover:hover {
+        border-color: rgba(255, 85, 0, 0.5);
+        box-shadow: 0 0 25px -5px rgba(255, 85, 0, 0.25);
+        transform: translateY(-2px);
+      }
+
+      /* Hot Wheels Glowing Accents */
+      .glow-orange {
+        box-shadow: 0 0 25px rgba(255, 85, 0, 0.4);
+      }
+      .glow-text-orange {
+        text-shadow: 0 0 16px rgba(255, 85, 0, 0.6);
+      }
+      .racing-stripe {
+        background: linear-gradient(135deg, #ff5500 0%, #ffd700 100%);
+      }
+      .bg-grid-pattern {
+        background-size: 30px 30px;
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 85, 0, 0.05) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 85, 0, 0.05) 1px,
+            transparent 1px
+          );
+      }
+
+      /* Hide Scrollbar for Horizontal Filter Lists on Mobile */
+      .scrollbar-none::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-none {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #090b10;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1a202c;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #ff5500;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-dark-900 text-gray-100 antialiased selection:bg-hotwheels-orange selection:text-black"
+  >
+    <!-- NAVIGATION HEADER -->
+    <header
+      class="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-hotwheels-orange/20"
+    >
+      <div
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between"
+      >
+        <!-- Brand Logo -->
+        <a href="#" class="flex items-center gap-2.5 group">
+          <div
+            class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-hotwheels-orange via-hotwheels-red to-hotwheels-yellow flex items-center justify-center shadow-lg shadow-hotwheels-orange/30 group-hover:scale-105 transition-transform shrink-0"
+          >
+            <i
+              data-lucide="gauge"
+              class="w-5 h-5 sm:w-6 sm:h-6 text-black stroke-[2.5]"
+            ></i>
+          </div>
+          <div class="flex flex-col">
+            <span
+              class="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-1 italic leading-tight"
+            >
+              APEX<span class="text-hotwheels-orange">SPEED</span
+              ><span
+                class="text-[10px] sm:text-xs not-italic px-1.5 py-0.5 bg-hotwheels-yellow text-black font-mono font-bold rounded"
+                >3D</span
+              >
+            </span>
+            <span
+              class="text-[9px] sm:text-[10px] font-mono tracking-widest text-gray-400 uppercase hidden sm:inline-block"
+              >Custom Hot Wheels Lab</span
+            >
+          </div>
+        </a>
+
+        <!-- Desktop Nav Links -->
+        <nav
+          class="hidden md:flex items-center gap-6 lg:gap-8 font-medium text-sm text-gray-300"
+        >
+          <a
+            href="#hero"
+            data-i18n="nav_shop"
+            class="hover:text-hotwheels-orange transition-colors"
+            >Taller</a
+          >
+          <a
+            href="#catalog"
+            data-i18n="nav_catalog"
+            class="hover:text-hotwheels-orange transition-colors"
+            >Catálogo</a
+          >
+          <a
+            href="#estimator"
+            data-i18n="nav_estimator"
+            class="hover:text-hotwheels-orange transition-colors"
+            >Cotizador</a
+          >
+          <a
+            href="#services"
+            data-i18n="nav_custom"
+            class="hover:text-hotwheels-orange transition-colors"
+            >Pedidos</a
+          >
+          <a
+            href="#about"
+            data-i18n="nav_about"
+            class="hover:text-hotwheels-orange transition-colors"
+            >Nosotros</a
+          >
+          <a
+            href="#process"
+            data-i18n="nav_process"
+            class="hover:text-hotwheels-orange transition-colors"
+            >Proceso</a
+          >
+        </nav>
+
+        <!-- Action CTA Button & Language Switcher -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Language Switcher -->
+          <div
+            class="flex items-center bg-dark-800 p-0.5 sm:p-1 rounded-lg border border-white/10 font-mono text-[11px] sm:text-xs"
+          >
+            <button
+              id="lang-es"
+              onclick="switchLanguage('es')"
+              class="px-2 py-1 rounded bg-hotwheels-orange text-black font-bold transition"
+            >
+              ESP
+            </button>
+            <button
+              id="lang-en"
+              onclick="switchLanguage('en')"
+              class="px-2 py-1 rounded text-gray-400 hover:text-white transition"
+            >
+              ENG
+            </button>
+          </div>
+
+          <a
+            href="#services"
+            class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-gradient-to-r from-hotwheels-orange to-hotwheels-yellow text-black font-black text-xs sm:text-sm uppercase tracking-wide transition-all shadow-lg shadow-hotwheels-orange/30 hover:shadow-hotwheels-orange/50"
+          >
+            <i data-lucide="wrench" class="w-4 h-4"></i>
+            <span data-i18n="btn_custom">Pedido Especial</span>
+          </a>
+
+          <!-- Mobile Menu Toggle Button -->
+          <button
+            id="mobile-menu-btn"
+            class="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-dark-700"
+          >
+            <i data-lucide="menu" class="w-6 h-6"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Menu Container -->
+      <div
+        id="mobile-menu"
+        class="hidden md:hidden glass-panel border-b border-hotwheels-orange/20 px-6 py-4 space-y-3"
+      >
+        <a
+          href="#hero"
+          data-i18n="nav_shop"
+          class="block text-gray-300 hover:text-hotwheels-orange py-1 text-sm font-semibold"
+          >Taller</a
+        >
+        <a
+          href="#catalog"
+          data-i18n="nav_catalog"
+          class="block text-gray-300 hover:text-hotwheels-orange py-1 text-sm font-semibold"
+          >Catálogo de Piezas</a
+        >
+        <a
+          href="#estimator"
+          data-i18n="nav_estimator"
+          class="block text-gray-300 hover:text-hotwheels-orange py-1 text-sm font-semibold"
+          >Cotizador</a
+        >
+        <a
+          href="#services"
+          data-i18n="nav_custom"
+          class="block text-gray-300 hover:text-hotwheels-orange py-1 text-sm font-semibold"
+          >Pedidos Especiales</a
+        >
+        <a
+          href="#about"
+          data-i18n="nav_about"
+          class="block text-gray-300 hover:text-hotwheels-orange py-1 text-sm font-semibold"
+          >Sobre Nosotros</a
+        >
+        <a
+          href="#process"
+          data-i18n="nav_process"
+          class="block text-gray-300 hover:text-hotwheels-orange py-1 text-sm font-semibold"
+          >Proceso</a
+        >
+        <a
+          href="#services"
+          data-i18n="btn_custom"
+          class="inline-block w-full text-center py-2.5 rounded-xl bg-hotwheels-orange text-black font-black uppercase text-xs tracking-wider mt-2 shadow-lg shadow-hotwheels-orange/30"
+        >
+          Pedido Especial
+        </a>
+      </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section
+      id="hero"
+      class="relative pt-24 pb-12 sm:pt-36 sm:pb-24 bg-grid-pattern overflow-hidden"
+    >
+      <!-- Ambient Radial Glow Effects -->
+      <div
+        class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-hotwheels-orange/15 rounded-full blur-[100px] sm:blur-[150px] pointer-events-none"
+      ></div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <!-- Hero Left Column - Copy -->
+          <div class="lg:col-span-7 space-y-6 sm:space-y-8 text-left">
+            <div
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-panel border border-hotwheels-orange/40 text-hotwheels-orange text-[10px] sm:text-xs font-mono tracking-wider font-bold max-w-full"
+            >
+              <span
+                class="w-2 h-2 rounded-full bg-hotwheels-orange animate-ping shrink-0"
+              ></span>
+              <span data-i18n="hero_badge" class="truncate"
+                >LABORATORIO 3D DE HOT WHEELS Y AUTOS ESCALA 1:64</span
+              >
+            </div>
+
+            <h1
+              class="text-3xl sm:text-5xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] uppercase italic"
+            >
+              <span data-i18n="hero_title_1">Piezas Únicas &</span>
+              <span
+                class="bg-clip-text text-transparent bg-gradient-to-r from-hotwheels-orange via-hotwheels-yellow to-hotwheels-red glow-text-orange"
+                data-i18n="hero_title_2"
+                >Tecnología 3D</span
+              >
+            </h1>
+
+            <p
+              class="text-sm sm:text-base lg:text-lg text-gray-300 max-w-2xl font-normal leading-relaxed"
+              data-i18n="hero_desc"
+            >
+              Impresión 3D de alta precisión para modificaciones de Hot Wheels,
+              rines 1:64 a medida, body kits, conectores de pistas, rampas y
+              diseño CAD personalizado para coleccionistas y corredores.
+            </p>
+
+            <!-- CTAs -->
+            <div
+              class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-2"
+            >
+              <a
+                href="#catalog"
+                class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-hotwheels-orange to-hotwheels-yellow hover:from-hotwheels-yellow hover:to-hotwheels-orange text-black font-black text-center uppercase tracking-wider text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-hotwheels-orange/30"
+              >
+                <i data-lucide="car" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                <span data-i18n="hero_cta_catalog">Ver Catálogo 3D</span>
+              </a>
+              <a
+                href="#services"
+                class="px-6 py-3.5 rounded-xl glass-panel text-white font-bold text-center text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all border border-hotwheels-orange/30 hover:border-hotwheels-orange"
+              >
+                <i
+                  data-lucide="pen-tool"
+                  class="w-4 h-4 sm:w-5 sm:h-5 text-hotwheels-orange"
+                ></i>
+                <span data-i18n="hero_cta_custom">Cotizar Pieza Especial</span>
+              </a>
+            </div>
+
+            <!-- Metrics Badges -->
+            <div
+              class="grid grid-cols-3 gap-3 sm:gap-6 pt-4 sm:pt-6 border-t border-white/10 max-w-xl"
+            >
+              <div>
+                <div
+                  class="text-xl sm:text-3xl font-black font-mono text-white"
+                >
+                  1:64
+                </div>
+                <div
+                  class="text-[10px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1"
+                  data-i18n="metric_scale"
+                >
+                  Escalas Precisas
+                </div>
+              </div>
+              <div>
+                <div
+                  class="text-xl sm:text-3xl font-black font-mono text-white"
+                >
+                  50 µm
+                </div>
+                <div
+                  class="text-[10px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1"
+                  data-i18n="metric_resin"
+                >
+                  Detalle Resina
+                </div>
+              </div>
+              <div>
+                <div
+                  class="text-xl sm:text-3xl font-black font-mono text-white"
+                >
+                  200+
+                </div>
+                <div
+                  class="text-[10px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1"
+                  data-i18n="metric_parts"
+                >
+                  Diseños Listo
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hero Right Column - Interactive 3D Car Viewport -->
+          <div class="lg:col-span-5 relative mt-4 lg:mt-0">
+            <div
+              class="glass-panel p-2 rounded-2xl relative border border-hotwheels-orange/30 shadow-2xl overflow-hidden"
+            >
+              <!-- Top Viewport Control Bar -->
+              <div
+                class="flex items-center justify-between px-3 py-2 bg-dark-800/90 rounded-xl mb-2 border border-white/5 text-xs"
+              >
+                <div class="flex items-center gap-1.5">
+                  <span
+                    class="w-2.5 h-2.5 rounded-full bg-hotwheels-red inline-block"
+                  ></span>
+                  <span
+                    class="w-2.5 h-2.5 rounded-full bg-hotwheels-yellow inline-block"
+                  ></span>
+                  <span
+                    class="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"
+                  ></span>
+                  <span
+                    class="ml-1 text-[10px] sm:text-xs font-mono text-gray-300 font-bold truncate max-w-[140px] sm:max-w-none"
+                    >CHASIS_CARRO_3D.STEP</span
+                  >
+                </div>
+                <span
+                  class="text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded bg-hotwheels-orange/20 text-hotwheels-orange border border-hotwheels-orange/40 font-bold"
+                  data-i18n="hero_3d_badge"
+                  >VISTA 3D</span
+                >
+              </div>
+
+              <!-- Main Canvas Viewport Container -->
+              <div
+                class="relative w-full h-[260px] sm:h-[380px] lg:h-[420px] rounded-xl overflow-hidden bg-gradient-to-b from-dark-900 via-dark-800 to-dark-900"
+              >
+                <canvas
+                  id="hero-3d-canvas"
+                  class="w-full h-full cursor-grab active:cursor-grabbing"
+                ></canvas>
+
+                <!-- Overlay Drag Prompt -->
+                <div
+                  class="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none text-[10px] sm:text-xs text-gray-300 font-mono bg-dark-900/80 backdrop-blur px-2.5 py-1.5 rounded-lg border border-white/10"
+                >
+                  <span class="flex items-center gap-1"
+                    ><i
+                      data-lucide="move"
+                      class="w-3 h-3 text-hotwheels-orange"
+                    ></i>
+                    <span data-i18n="hero_drag_hint"
+                      >Arrastra p/ girar</span
+                    ></span
+                  >
+                  <span class="flex items-center gap-1"
+                    ><i
+                      data-lucide="zoom-in"
+                      class="w-3 h-3 text-hotwheels-orange"
+                    ></i>
+                    <span data-i18n="hero_zoom_hint">Zoom</span></span
+                  >
+                </div>
+
+                <!-- Interactive Mode Selector Pills -->
+                <div class="absolute top-3 right-3 flex flex-col gap-1.5">
+                  <button
+                    id="btn-wireframe"
+                    class="px-2 py-0.5 text-[10px] sm:text-xs font-mono rounded bg-dark-800/90 text-gray-300 border border-white/10 transition"
+                    data-i18n="btn_wireframe"
+                  >
+                    Estructura
+                  </button>
+                  <button
+                    id="btn-shade"
+                    class="px-2 py-0.5 text-[10px] sm:text-xs font-mono rounded bg-hotwheels-orange/20 text-hotwheels-orange border border-hotwheels-orange/40 transition font-bold"
+                    data-i18n="btn_solid"
+                  >
+                    Sólido
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATALOG / MODEL SHOWCASE SECTION -->
+    <section
+      id="catalog"
+      class="py-16 sm:py-24 bg-dark-800/60 relative border-t border-white/10"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Section Title Header -->
+        <div
+          class="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-6"
+        >
+          <div>
+            <div
+              class="text-hotwheels-orange font-mono text-xs tracking-wider uppercase font-bold mb-1.5"
+              data-i18n="cat_tag"
+            >
+              Catálogo y Tienda 3D
+            </div>
+            <h2
+              class="text-2xl sm:text-4xl font-black text-white tracking-tight uppercase italic"
+              data-i18n="cat_title"
+            >
+              Piezas de Carros y Pistas
+            </h2>
+            <p
+              class="text-gray-400 mt-1.5 text-xs sm:text-base"
+              data-i18n="cat_subtitle"
+            >
+              Inspecciona modelos en 3D, descarga archivos STL o pide tu pieza
+              impresa lista para instalar.
+            </p>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="w-full md:w-auto">
+            <div class="relative">
+              <i
+                data-lucide="search"
+                class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              ></i>
+              <input
+                type="text"
+                id="catalog-search"
+                placeholder="Buscar rines, pistas, spoilers..."
+                class="pl-10 pr-4 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-xs sm:text-sm text-gray-200 focus:outline-none focus:border-hotwheels-orange w-full md:w-64"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Filter Buttons -->
+        <div
+          class="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none text-xs sm:text-sm font-semibold -mx-4 px-4 sm:mx-0 sm:px-0"
+        >
+          <button
+            class="catalog-filter-btn active px-3.5 py-2 rounded-xl bg-hotwheels-orange text-black font-bold shadow-lg shadow-hotwheels-orange/30 whitespace-nowrap transition shrink-0"
+            data-category="all"
+            data-i18n="cat_filter_all"
+          >
+            Todas las Piezas
+          </button>
+          <button
+            class="catalog-filter-btn px-3.5 py-2 rounded-xl glass-panel text-gray-300 border border-white/10 whitespace-nowrap transition shrink-0"
+            data-category="wheels"
+            data-i18n="cat_filter_wheels"
+          >
+            Rines y Llantas 1:64
+          </button>
+          <button
+            class="catalog-filter-btn px-3.5 py-2 rounded-xl glass-panel text-gray-300 border border-white/10 whitespace-nowrap transition shrink-0"
+            data-category="tracks"
+            data-i18n="cat_filter_tracks"
+          >
+            Pistas y Conectores
+          </button>
+          <button
+            class="catalog-filter-btn px-3.5 py-2 rounded-xl glass-panel text-gray-300 border border-white/10 whitespace-nowrap transition shrink-0"
+            data-category="bodykits"
+            data-i18n="cat_filter_bodykits"
+          >
+            Widebody Kits y Spoilers
+          </button>
+          <button
+            class="catalog-filter-btn px-3.5 py-2 rounded-xl glass-panel text-gray-300 border border-white/10 whitespace-nowrap transition shrink-0"
+            data-category="diorama"
+            data-i18n="cat_filter_diorama"
+          >
+            Dioramas y Expositores
+          </button>
+        </div>
+
+        <!-- Catalog Grid Container -->
+        <div
+          id="catalog-grid"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
+        >
+          <!-- Dynamic Model Cards Injected by JavaScript -->
+        </div>
+      </div>
+    </section>
+
+    <!-- INSTANT COST ESTIMATOR WIDGET -->
+    <section
+      id="estimator"
+      class="py-16 sm:py-24 relative bg-dark-900 border-t border-white/5"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <!-- Info Column -->
+          <div class="lg:col-span-5 space-y-4 sm:space-y-6">
+            <div
+              class="text-hotwheels-orange font-mono text-xs tracking-wider uppercase font-bold"
+              data-i18n="est_tag"
+            >
+              Calculadora Express
+            </div>
+            <h2
+              class="text-2xl sm:text-4xl font-black text-white tracking-tight uppercase italic"
+              data-i18n="est_title"
+            >
+              Cotizador de Impresión 3D
+            </h2>
+            <p
+              class="text-gray-300 leading-relaxed text-xs sm:text-base"
+              data-i18n="est_desc"
+            >
+              Calcula al instante el costo de tus piezas para Hot Wheels,
+              adaptadores de pistas o carrocerías custom en Resina SLA de alta
+              definición o filamento PETG/PLA+.
+            </p>
+
+            <div class="space-y-3 sm:space-y-4 pt-2">
+              <div class="flex items-start gap-3 sm:gap-4">
+                <div
+                  class="p-2 rounded-lg bg-hotwheels-orange/10 text-hotwheels-orange border border-hotwheels-orange/30 shrink-0"
+                >
+                  <i data-lucide="flame" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                </div>
+                <div>
+                  <h4
+                    class="text-xs sm:text-sm font-bold text-white uppercase"
+                    data-i18n="est_feature1_title"
+                  >
+                    Resina de Alta Definición
+                  </h4>
+                  <p
+                    class="text-[11px] sm:text-xs text-gray-400 mt-0.5"
+                    data-i18n="est_feature1_desc"
+                  >
+                    Micro-capas en impresión SLA para rines ultra detallados
+                    escala 1:64.
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3 sm:gap-4">
+                <div
+                  class="p-2 rounded-lg bg-hotwheels-orange/10 text-hotwheels-orange border border-hotwheels-orange/30 shrink-0"
+                >
+                  <i
+                    data-lucide="shield-check"
+                    class="w-4 h-4 sm:w-5 sm:h-5"
+                  ></i>
+                </div>
+                <div>
+                  <h4
+                    class="text-xs sm:text-sm font-bold text-white uppercase"
+                    data-i18n="est_feature2_title"
+                  >
+                    Ajuste Exacto a Pistas
+                  </h4>
+                  <p
+                    class="text-[11px] sm:text-xs text-gray-400 mt-0.5"
+                    data-i18n="est_feature2_desc"
+                  >
+                    Compatibilidad 100% garantizada con conectores de pista
+                    naranja Hot Wheels.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estimator Widget Card -->
+          <div class="lg:col-span-7">
+            <div
+              class="glass-panel p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-hotwheels-orange/20 relative shadow-2xl"
+            >
+              <div class="grid sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+                <!-- Material Selector -->
+                <div>
+                  <label
+                    class="block text-xs font-mono text-gray-300 uppercase tracking-wider mb-2 font-bold"
+                    data-i18n="lbl_material"
+                    >Selecciona el Material</label
+                  >
+                  <select
+                    id="est-material"
+                    class="w-full px-3.5 py-3 rounded-xl bg-dark-800 border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-hotwheels-orange"
+                  >
+                    <option value="35" data-density="SLA Resin">
+                      Resina SLA Ultra Detalle (Rines 1:64) ($0.35/cm³)
+                    </option>
+                    <option value="15" data-density="PLA+">
+                      PLA+ Naranja Pista ($0.15/cm³)
+                    </option>
+                    <option value="20" data-density="PETG">
+                      PETG Alta Resistencia Pistas ($0.20/cm³)
+                    </option>
+                    <option value="40" data-density="TPU">
+                      TPU Goma Flexible (Llantas) ($0.40/cm³)
+                    </option>
+                    <option value="30" data-density="ABS">
+                      ABS Rígido para Chasis ($0.30/cm³)
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Build Size Preset -->
+                <div>
+                  <label
+                    class="block text-xs font-mono text-gray-300 uppercase tracking-wider mb-2 font-bold"
+                    data-i18n="lbl_volume"
+                    >Volumen / Tamaño Estimado (cm³)</label
+                  >
+                  <input
+                    type="number"
+                    id="est-volume"
+                    value="35"
+                    min="2"
+                    max="2000"
+                    class="w-full px-3.5 py-3 rounded-xl bg-dark-800 border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-hotwheels-orange font-mono"
+                  />
+                </div>
+              </div>
+
+              <!-- Infill Density Slider -->
+              <div class="mb-4 sm:mb-6">
+                <div class="flex justify-between items-center mb-2">
+                  <label
+                    class="text-xs font-mono text-gray-300 uppercase tracking-wider font-bold"
+                    data-i18n="lbl_infill"
+                    >Relleno Interno (Resistencia)</label
+                  >
+                  <span
+                    id="est-infill-val"
+                    class="text-hotwheels-orange font-mono text-xs sm:text-sm font-bold"
+                    >40%</span
+                  >
+                </div>
+                <input
+                  type="range"
+                  id="est-infill"
+                  min="10"
+                  max="100"
+                  step="5"
+                  value="40"
+                  class="w-full accent-hotwheels-orange bg-dark-800 rounded-lg cursor-pointer h-2"
+                />
+              </div>
+
+              <!-- Layer Height Options -->
+              <div class="mb-6 sm:mb-8">
+                <label
+                  class="block text-xs font-mono text-gray-300 uppercase tracking-wider mb-2 font-bold"
+                  data-i18n="lbl_precision"
+                  >Nivel de Detalle / Capa</label
+                >
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <button
+                    type="button"
+                    class="est-layer-btn px-3 py-2.5 rounded-xl border border-white/10 bg-dark-800 text-[11px] sm:text-xs font-mono text-gray-300 hover:border-hotwheels-orange transition active text-center"
+                    data-mult="1.4"
+                    data-precision="0.05mm SLA"
+                    data-i18n="prec_ultra"
+                  >
+                    0.05mm Ultra Fino
+                  </button>
+                  <button
+                    type="button"
+                    class="est-layer-btn px-3 py-2.5 rounded-xl border border-white/10 bg-dark-800 text-[11px] sm:text-xs font-mono text-gray-300 hover:border-hotwheels-orange transition text-center"
+                    data-mult="1.0"
+                    data-precision="0.16mm Standard"
+                    data-i18n="prec_std"
+                  >
+                    0.16mm Estándar
+                  </button>
+                  <button
+                    type="button"
+                    class="est-layer-btn px-3 py-2.5 rounded-xl border border-white/10 bg-dark-800 text-[11px] sm:text-xs font-mono text-gray-300 hover:border-hotwheels-orange transition text-center"
+                    data-mult="0.8"
+                    data-precision="0.24mm Track Fast"
+                    data-i18n="prec_fast"
+                  >
+                    0.24mm Pista Veloz
+                  </button>
+                </div>
+              </div>
+
+              <!-- Price Calculation Output Bar -->
+              <div
+                class="bg-dark-800/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-hotwheels-orange/30 flex flex-col sm:flex-row items-center justify-between gap-4"
+              >
+                <div class="text-center sm:text-left">
+                  <div
+                    class="text-[10px] sm:text-xs font-mono text-gray-400 uppercase"
+                    data-i18n="lbl_est_total"
+                  >
+                    Costo Estimado de Impresión
+                  </div>
+                  <div
+                    class="flex items-baseline justify-center sm:justify-start gap-2 mt-0.5"
+                  >
+                    <span
+                      id="est-total-price-mxn"
+                      class="text-2xl sm:text-4xl font-black text-white font-mono"
+                      >$360 MXN</span
+                    >
+                    <span
+                      id="est-total-price-usd"
+                      class="text-xs text-gray-400 font-mono"
+                      >($18.00 USD)</span
+                    >
+                  </div>
+                </div>
+                <a
+                  href="#services"
+                  class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-hotwheels-orange to-hotwheels-yellow text-black font-black uppercase text-xs sm:text-sm transition shadow-lg shadow-hotwheels-orange/30 text-center"
+                  data-i18n="btn_order_print"
+                >
+                  Encargar Pieza
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CUSTOM ORDERS & FABRICATION SERVICES SECTION -->
+    <section
+      id="services"
+      class="py-16 sm:py-24 bg-dark-800/40 relative border-t border-white/5"
+    >
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+          <div
+            class="text-hotwheels-orange font-mono text-xs tracking-wider uppercase font-bold mb-1.5"
+            data-i18n="form_tag"
+          >
+            Pedidos Especiales
+          </div>
+          <h2
+            class="text-2xl sm:text-4xl font-black text-white tracking-tight uppercase italic"
+            data-i18n="form_main_title"
+          >
+            Diseño CAD o Impresión Directa
+          </h2>
+          <p
+            class="text-gray-400 mt-2 text-xs sm:text-base"
+            data-i18n="form_main_desc"
+          >
+            ¡Cuéntanos tu proyecto! Diseñamos carrocerías a medida, widebody
+            kits, rines especiales o imprimimos tus propios archivos 3D
+            STL/STEP.
+          </p>
+        </div>
+
+        <!-- Tab Buttons (Option A vs Option B) -->
+        <div class="flex justify-center mb-6 sm:mb-10">
+          <div
+            class="inline-flex flex-col sm:flex-row p-1.5 rounded-2xl glass-panel border border-white/10 w-full sm:w-auto gap-1"
+          >
+            <button
+              id="tab-design"
+              class="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-extrabold transition flex items-center justify-center gap-2 bg-hotwheels-orange text-black shadow-lg shadow-hotwheels-orange/30"
+            >
+              <i data-lucide="pen-tool" class="w-4 h-4"></i>
+              <span data-i18n="tab_option_a"
+                >Opción A: Diseñar Pieza desde Cero</span
+              >
+            </button>
+            <button
+              id="tab-print"
+              class="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-extrabold transition flex items-center justify-center gap-2 text-gray-400 hover:text-white"
+            >
+              <i data-lucide="printer" class="w-4 h-4"></i>
+              <span data-i18n="tab_option_b"
+                >Opción B: Imprimir Mi Archivo STL</span
+              >
+            </button>
+          </div>
+        </div>
+
+        <!-- ORDER FORM CONTAINER -->
+        <div
+          class="glass-panel p-5 sm:p-10 rounded-2xl sm:rounded-3xl border border-hotwheels-orange/20 relative shadow-2xl"
+        >
+          <form
+            id="custom-order-form"
+            onsubmit="
+              event.preventDefault();
+              handleFormSubmit();
+            "
+          >
+            <!-- Dynamic Header Label -->
+            <div class="mb-6 sm:mb-8 border-b border-white/10 pb-4 sm:pb-6">
+              <h3
+                id="form-title"
+                class="text-base sm:text-xl font-bold text-white flex items-center gap-2"
+              >
+                <i
+                  data-lucide="pen-tool"
+                  class="w-5 h-5 text-hotwheels-orange shrink-0"
+                ></i>
+                <span data-i18n="form_opt_a_title"
+                  >Diseñar una Pieza de Carro Personalizada desde Cero</span
+                >
+              </h3>
+              <p
+                id="form-subtitle"
+                class="text-xs sm:text-sm text-gray-400 mt-1"
+                data-i18n="form_opt_a_sub"
+              >
+                Describe tu idea, modificación de Hot Wheels, pista custom o
+                rines. Nuestros diseñadores CAD modelarán la pieza a escala.
+              </p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+              <div>
+                <label
+                  class="block text-xs font-mono text-gray-300 uppercase tracking-wider mb-2 font-bold"
+                  data-i18n="lbl_name"
+                  >Tu Nombre *</label
+                >
+                <input
+                  type="text"
+                  required
+                  placeholder="Alex Racer"
+                  class="w-full px-4 py-3 rounded-xl bg-dark-900 border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-hotwheels-orange"
+                />
+              </div>
+              <div>
+                <label
+                  class="block text-xs font-mono text-gray-300 uppercase tracking-wider mb-2 font-bold"
+                  data-i18n="lbl_email"
+                  >Correo Electrónico *</label
+                >
+                <input
+                  type="email"
+                  required
+                  placeholder="alex@hotwheels-customs.com"
+                  class="w-full px-4 py-3 rounded-xl bg-dark-900 border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-hotwheels-orange"
+                />
+              </div>
+            </div>
+
+            <!-- Material & Production Options -->
+            <div class="grid sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+              <div>
+                <label
+                  class="block text-xs font-mono text-gray-300 uppercase tracking-wider mb-2 font-bold"
+                  data-i18n="lbl_pref_mat"
+                  >Material y Acabado Preferido</label
+                >
+                <select
+                  class="w-full px-4 py-3 rounded-xl bg-dark-900 border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-hotwheels-orange"
+                >
+                  <option>Resina SLA de Alta Detalle (Ideal Rines 1:64)</option>
+                  <option>
+                    PLA+ Naranja Brilla (Igual a Pistas Hot Wheels)
+                  </option>
+                  <option>TPU Goma Flexible (Llantas y Parachoques)</option>
+                  <option>PETG Alta Resistencia (Rampas y Rieles)</option>
+                  <option>ABS Precisión (Carrocerías y Chasis)</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  class="block text-xs font-mono text-gray-300 uppercase tracking-wider mb-2 font-bold"
+                  data-i18n="lbl_target_scale"
+                  >Escala del Vehículo</label
+                >
+                <select
+                  class="w-full px-4 py-3 rounded-xl bg-dark-900 border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-hotwheels-orange font-mono"
+                >
+                  <option>Escala 1:64 (Hot Wheels / Matchbox)</option>
+                  <option>Escala 1:43</option>
+                  <option>Escala 1:32 (Autos de Slot)</option>
+                  <option>Escala 1:24 (Kits para Armar)</option>
+                  <option>Escala 1:10 (Autos RC)</option>
+                  <option>Medidas Personalizadas</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Drag & Drop File Upload Box -->
+            <div class="mb-4 sm:mb-6">
+              <label
+                class="block text-xs font-mono text-gray-300 uppercase tracking-wider mb-2 font-bold"
+                id="upload-label"
+                data-i18n="lbl_upload_a"
+              >
+                Fotos de Referencia, Bocetos o Archivos CAD (.STL, .PNG, .PDF)
+              </label>
+              <div
+                class="border-2 border-dashed border-hotwheels-orange/30 rounded-2xl p-6 sm:p-8 text-center bg-dark-900/50 hover:bg-dark-900 hover:border-hotwheels-orange transition cursor-pointer group"
+              >
+                <i
+                  data-lucide="upload-cloud"
+                  class="w-8 h-8 sm:w-10 sm:h-10 mx-auto text-gray-400 group-hover:text-hotwheels-orange transition mb-2"
+                ></i>
+                <p class="text-xs sm:text-sm text-gray-300 font-medium">
+                  <span data-i18n="upload_drag"
+                    >Arrastra tus archivos aquí o</span
+                  >
+                  <span
+                    class="text-hotwheels-orange underline font-bold"
+                    data-i18n="upload_browse"
+                    >busca en tu equipo</span
+                  >
+                </p>
+                <p
+                  class="text-[10px] sm:text-xs text-gray-400 mt-1"
+                  data-i18n="upload_formats"
+                >
+                  Formatos permitidos: STL, STEP, OBJ, PNG, JPG, PDF hasta 50MB
+                </p>
+              </div>
+            </div>
+
+            <!-- Description Textarea -->
+            <div class="mb-6 sm:mb-8">
+              <label
+                class="block text-xs font-mono text-gray-300 uppercase tracking-wider mb-2 font-bold"
+                data-i18n="lbl_details"
+                >Detalles de la Pieza o Proyecto *</label
+              >
+              <textarea
+                rows="4"
+                required
+                placeholder="Ejemplo: Necesito un propulsor de cohete escala 1:64 para embonar en pistas Hot Wheels, o un widebody kit para un Mustang '67..."
+                class="w-full px-4 py-3 rounded-xl bg-dark-900 border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-hotwheels-orange"
+              ></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button
+              type="submit"
+              class="w-full py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-hotwheels-orange to-hotwheels-yellow hover:from-hotwheels-yellow hover:to-hotwheels-orange text-black font-black uppercase tracking-wider text-xs sm:text-base transition shadow-lg shadow-hotwheels-orange/30 flex items-center justify-center gap-2"
+            >
+              <i data-lucide="flame" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+              <span data-i18n="btn_submit_order"
+                >Enviar Solicitud de Cotización</span
+              >
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT US SECTION -->
+    <section
+      id="about"
+      class="py-16 sm:py-24 bg-dark-900 relative border-t border-white/5"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <div class="lg:col-span-6 space-y-4 sm:space-y-6">
+            <div
+              class="text-hotwheels-orange font-mono text-xs tracking-wider uppercase font-bold"
+              data-i18n="about_tag"
+            >
+              Sobre Nosotros
+            </div>
+            <h2
+              class="text-2xl sm:text-4xl font-black text-white tracking-tight uppercase italic"
+              data-i18n="about_title"
+            >
+              Un Pequeño Taller Haciendo Grandes Sueños Realidad
+            </h2>
+            <p
+              class="text-gray-300 leading-relaxed text-xs sm:text-base"
+              data-i18n="about_p1"
+            >
+              Somos un equipo súper pequeño de entusiastas de los autos y la
+              tecnología 3D. Nos apasiona la cultura automotriz, las
+              modificaciones de Hot Wheels y la fabricación digital. Cada pieza
+              que imprimimos, desde el rin más diminuto de 1:64 hasta la pista
+              más compleja, la hacemos trabajando duro con dedicación artesanal
+              para dar vida a tus proyectos.
+            </p>
+            <p
+              class="text-gray-400 leading-relaxed text-xs sm:text-sm"
+              data-i18n="about_p2"
+            >
+              Nos encanta colaborar directamente con coleccionistas, creadores y
+              amantes del automovilismo. No importa si tienes un boceto en papel
+              o un archivo 3D listo; aquí nos aseguramos de que obtengas la
+              mejor calidad con la máxima precisión posible.
+            </p>
+          </div>
+
+          <!-- Shipping & Pickup Info Card -->
+          <div class="lg:col-span-6 mt-4 lg:mt-0">
+            <div
+              class="glass-panel p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-hotwheels-orange/30 relative"
+            >
+              <h3
+                class="text-lg sm:text-xl font-black text-white uppercase italic mb-4 sm:mb-6 flex items-center gap-2"
+              >
+                <i
+                  data-lucide="truck"
+                  class="w-5 h-5 sm:w-6 sm:h-6 text-hotwheels-orange"
+                ></i>
+                <span data-i18n="shipping_title">Envíos y Entregas</span>
+              </h3>
+
+              <div class="space-y-4 sm:space-y-6">
+                <!-- Shipping Option 1: Standard Shipping -->
+                <div class="flex items-start gap-3 sm:gap-4">
+                  <div
+                    class="p-2.5 rounded-xl bg-hotwheels-orange/10 text-hotwheels-orange border border-hotwheels-orange/30 shrink-0"
+                  >
+                    <i data-lucide="package" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <h4
+                      class="text-xs sm:text-sm font-bold text-white uppercase"
+                      data-i18n="ship_std_title"
+                    >
+                      Envío Estándar Nacional
+                    </h4>
+                    <p
+                      class="text-[11px] sm:text-xs text-hotwheels-orange font-bold font-mono mt-0.5"
+                      data-i18n="ship_std_price"
+                    >
+                      +$100 MXN (~$5 USD) adicionales
+                    </p>
+                    <p
+                      class="text-[11px] sm:text-xs text-gray-400 mt-1"
+                      data-i18n="ship_std_desc"
+                    >
+                      Enviamos a todo el país empacando cuidadosamente cada
+                      pieza con protección antichoque.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Shipping Option 2: Free Local Days -->
+                <div class="flex items-start gap-3 sm:gap-4">
+                  <div
+                    class="p-2.5 rounded-xl bg-hotwheels-orange/10 text-hotwheels-orange border border-hotwheels-orange/30 shrink-0"
+                  >
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <h4
+                      class="text-xs sm:text-sm font-bold text-white uppercase"
+                      data-i18n="ship_free_title"
+                    >
+                      Envío Gratis Días Especiales
+                    </h4>
+                    <p
+                      class="text-[11px] sm:text-xs text-gray-400 mt-1"
+                      data-i18n="ship_free_desc"
+                    >
+                      Ofrecemos envío GRATIS en fechas seleccionadas en zonas
+                      cercanas a nuestro taller.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Shipping Option 3: Free Pickup -->
+                <div class="flex items-start gap-3 sm:gap-4">
+                  <div
+                    class="p-2.5 rounded-xl bg-hotwheels-orange/10 text-hotwheels-orange border border-hotwheels-orange/30 shrink-0"
+                  >
+                    <i data-lucide="map-pin" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <h4
+                      class="text-xs sm:text-sm font-bold text-white uppercase"
+                      data-i18n="ship_pickup_title"
+                    >
+                      Entrega Gratuita en Taller
+                    </h4>
+                    <p
+                      class="text-[11px] sm:text-xs text-green-400 font-bold font-mono mt-0.5"
+                      data-i18n="ship_pickup_price"
+                    >
+                      ¡$0 MXN - Totalmente Gratis!
+                    </p>
+                    <p
+                      class="text-[11px] sm:text-xs text-gray-400 mt-1"
+                      data-i18n="ship_pickup_desc"
+                    >
+                      Puedes recoger tus piezas terminadas directamente en
+                      nuestro local sin costo alguno.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROCESS / WORKFLOW PIPELINE -->
+    <section
+      id="process"
+      class="py-16 sm:py-24 bg-dark-800/60 relative border-t border-white/5"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-16">
+          <div
+            class="text-hotwheels-orange font-mono text-xs tracking-wider uppercase font-bold mb-1.5"
+            data-i18n="proc_tag"
+          >
+            Flujo de Trabajo
+          </div>
+          <h2
+            class="text-2xl sm:text-4xl font-black text-white tracking-tight uppercase italic"
+            data-i18n="proc_title"
+          >
+            Del Garaje Digital a la Pista
+          </h2>
+          <p
+            class="text-gray-400 mt-2 text-xs sm:text-base"
+            data-i18n="proc_desc"
+          >
+            Así es como fabricamos y probamos tus piezas para carros 3D.
+          </p>
+        </div>
+
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative"
+        >
+          <!-- Step 1 -->
+          <div
+            class="glass-panel p-5 sm:p-6 rounded-2xl border border-white/10 relative"
+          >
+            <div
+              class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-hotwheels-orange/10 text-hotwheels-orange border border-hotwheels-orange/40 flex items-center justify-center font-mono font-black text-base sm:text-lg mb-3 sm:mb-4"
+            >
+              01
+            </div>
+            <h3
+              class="text-base sm:text-lg font-bold text-white mb-1.5 uppercase"
+              data-i18n="step1_title"
+            >
+              Modelado CAD
+            </h3>
+            <p
+              class="text-xs text-gray-400 leading-relaxed"
+              data-i18n="step1_desc"
+            >
+              Diseño digital 3D de piezas, alerones, ejes de rines y conectores
+              de pista.
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div
+            class="glass-panel p-5 sm:p-6 rounded-2xl border border-white/10 relative"
+          >
+            <div
+              class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-hotwheels-orange/10 text-hotwheels-orange border border-hotwheels-orange/40 flex items-center justify-center font-mono font-black text-base sm:text-lg mb-3 sm:mb-4"
+            >
+              02
+            </div>
+            <h3
+              class="text-base sm:text-lg font-bold text-white mb-1.5 uppercase"
+              data-i18n="step2_title"
+            >
+              Preparación
+            </h3>
+            <p
+              class="text-xs text-gray-400 leading-relaxed"
+              data-i18n="step2_desc"
+            >
+              Configuración de laminado de alta definición para encajes
+              perfectos.
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div
+            class="glass-panel p-5 sm:p-6 rounded-2xl border border-white/10 relative"
+          >
+            <div
+              class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-hotwheels-orange/10 text-hotwheels-orange border border-hotwheels-orange/40 flex items-center justify-center font-mono font-black text-base sm:text-lg mb-3 sm:mb-4"
+            >
+              03
+            </div>
+            <h3
+              class="text-base sm:text-lg font-bold text-white mb-1.5 uppercase"
+              data-i18n="step3_title"
+            >
+              Impresión 3D
+            </h3>
+            <p
+              class="text-xs text-gray-400 leading-relaxed"
+              data-i18n="step3_desc"
+            >
+              Resina SLA a 50 micras o PETG de alta velocidad para pistas
+              exigentes.
+            </p>
+          </div>
+
+          <!-- Step 4 -->
+          <div
+            class="glass-panel p-5 sm:p-6 rounded-2xl border border-white/10 relative"
+          >
+            <div
+              class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-hotwheels-orange/10 text-hotwheels-orange border border-hotwheels-orange/40 flex items-center justify-center font-mono font-black text-base sm:text-lg mb-3 sm:mb-4"
+            >
+              04
+            </div>
+            <h3
+              class="text-base sm:text-lg font-bold text-white mb-1.5 uppercase"
+              data-i18n="step4_title"
+            >
+              Calidad & Envío
+            </h3>
+            <p
+              class="text-xs text-gray-400 leading-relaxed"
+              data-i18n="step4_desc"
+            >
+              Limpieza de soportes, verificación de alineación de ejes y envío o
+              recogida.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer
+      class="bg-dark-900 border-t border-white/10 py-12 sm:py-16 text-gray-400 text-xs sm:text-sm"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+          <!-- Brand Info -->
+          <div class="space-y-3">
+            <div class="flex items-center gap-2.5">
+              <div
+                class="w-7 h-7 rounded-lg bg-gradient-to-tr from-hotwheels-orange to-hotwheels-yellow flex items-center justify-center"
+              >
+                <i data-lucide="gauge" class="w-4 h-4 text-black"></i>
+              </div>
+              <span
+                class="text-base font-black text-white tracking-tight italic"
+                >APEX<span class="text-hotwheels-orange">SPEED</span> 3D</span
+              >
+            </div>
+            <p
+              class="text-xs text-gray-400 leading-relaxed"
+              data-i18n="footer_brand_desc"
+            >
+              Piezas personalizadas para Hot Wheels, rines escala 1:64, widebody
+              kits e ingeniería 3D para pistas.
+            </p>
+          </div>
+
+          <!-- Quick Links -->
+          <div>
+            <h4
+              class="text-xs font-mono uppercase text-white font-bold tracking-wider mb-3"
+              data-i18n="footer_menu"
+            >
+              Menú del Taller
+            </h4>
+            <ul class="space-y-2 text-xs">
+              <li>
+                <a
+                  href="#hero"
+                  class="hover:text-hotwheels-orange transition"
+                  data-i18n="nav_shop"
+                  >Taller</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#catalog"
+                  class="hover:text-hotwheels-orange transition"
+                  data-i18n="nav_catalog"
+                  >Catálogo</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#estimator"
+                  class="hover:text-hotwheels-orange transition"
+                  data-i18n="nav_estimator"
+                  >Cotizador</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#services"
+                  class="hover:text-hotwheels-orange transition"
+                  data-i18n="nav_custom"
+                  >Pedidos Especiales</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#about"
+                  class="hover:text-hotwheels-orange transition"
+                  data-i18n="nav_about"
+                  >Sobre Nosotros</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <!-- Specs -->
+          <div>
+            <h4
+              class="text-xs font-mono uppercase text-white font-bold tracking-wider mb-3"
+              data-i18n="footer_specs"
+            >
+              Escalas y Materiales
+            </h4>
+            <ul class="space-y-2 text-xs">
+              <li class="flex items-center gap-2">
+                <span
+                  class="w-1.5 h-1.5 rounded-full bg-hotwheels-orange"
+                ></span>
+                Escalas 1:64 / 1:43 / 1:24
+              </li>
+              <li class="flex items-center gap-2">
+                <span
+                  class="w-1.5 h-1.5 rounded-full bg-hotwheels-orange"
+                ></span>
+                Resina SLA Micro Detalle
+              </li>
+              <li class="flex items-center gap-2">
+                <span
+                  class="w-1.5 h-1.5 rounded-full bg-hotwheels-orange"
+                ></span>
+                PLA+ Naranja Pista
+              </li>
+              <li class="flex items-center gap-2">
+                <span
+                  class="w-1.5 h-1.5 rounded-full bg-hotwheels-orange"
+                ></span>
+                Goma Flexible TPU
+              </li>
+            </ul>
+          </div>
+
+          <!-- Contact & Legal -->
+          <div>
+            <h4
+              class="text-xs font-mono uppercase text-white font-bold tracking-wider mb-3"
+              data-i18n="footer_contact"
+            >
+              Atención al Cliente
+            </h4>
+            <div class="space-y-2 text-xs">
+              <p class="flex items-center gap-2">
+                <i
+                  data-lucide="mail"
+                  class="w-4 h-4 text-hotwheels-orange shrink-0"
+                ></i>
+                contacto@apexspeed3d.com
+              </p>
+              <p class="flex items-center gap-2">
+                <i
+                  data-lucide="map-pin"
+                  class="w-4 h-4 text-hotwheels-orange shrink-0"
+                ></i>
+                Taller de Impresión 3D
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-3"
+        >
+          <p class="text-center sm:text-left">
+            © 2026 ApexSpeed 3D Garage. Impresión 3D artesanal de piezas escala.
+          </p>
+          <div class="flex gap-4">
+            <a href="#" class="hover:text-gray-400">Privacidad</a>
+            <a href="#" class="hover:text-gray-400">Términos</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- MODAL PREVIEW FOR MODEL PURCHASE / DOWNLOAD -->
+    <div
+      id="model-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md hidden overflow-y-auto"
+    >
+      <div
+        class="glass-panel w-full max-w-3xl rounded-2xl sm:rounded-3xl border border-hotwheels-orange/30 overflow-hidden shadow-2xl relative my-auto"
+      >
+        <button
+          id="close-modal-btn"
+          class="absolute top-3 right-3 z-10 p-2 rounded-full bg-dark-800 text-gray-400 hover:text-white border border-white/10"
+        >
+          <i data-lucide="x" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+        </button>
+
+        <div class="grid md:grid-cols-2">
+          <!-- Modal Interactive 3D Canvas -->
+          <div class="h-52 sm:h-64 md:h-auto bg-dark-900 relative">
+            <canvas id="modal-3d-canvas" class="w-full h-full"></canvas>
+            <div
+              class="absolute bottom-3 left-3 text-[10px] font-mono text-hotwheels-orange bg-dark-900/80 px-2 py-1 rounded border border-white/10 font-bold"
+              data-i18n="modal_inspector"
+            >
+              Inspector 3D de Piezas
+            </div>
+          </div>
+
+          <!-- Modal Content Details -->
+          <div class="p-5 sm:p-8 space-y-3 sm:space-y-4">
+            <span
+              id="modal-category"
+              class="text-xs font-mono text-hotwheels-orange uppercase tracking-wider font-bold"
+              >Categoría</span
+            >
+            <h3
+              id="modal-title"
+              class="text-xl sm:text-2xl font-black text-white uppercase italic"
+            >
+              Nombre del Modelo
+            </h3>
+            <p id="modal-desc" class="text-xs text-gray-400 leading-relaxed">
+              Descripción del modelo...
+            </p>
+
+            <div class="py-2.5 border-y border-white/10 space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <span class="text-gray-400" data-i18n="modal_target_scale"
+                  >Escala Destino:</span
+                >
+                <span class="text-white font-mono font-bold">1:64 Escala</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span class="text-gray-400" data-i18n="modal_rec_mat"
+                  >Material Recomendado:</span
+                >
+                <span
+                  id="modal-material"
+                  class="text-hotwheels-orange font-mono font-bold"
+                  >Resina SLA</span
+                >
+              </div>
+              <div class="flex justify-between text-xs">
+                <span class="text-gray-400" data-i18n="modal_print_time"
+                  >Tiempo Est. de Impresión:</span
+                >
+                <span class="text-white font-mono">1h 15m</span>
+              </div>
+            </div>
+
+            <div
+              class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2"
+            >
+              <div class="text-center sm:text-left">
+                <span
+                  class="text-[10px] sm:text-xs text-gray-400 block"
+                  data-i18n="modal_price_lbl"
+                  >Precio de la Pieza</span
+                >
+                <div
+                  class="flex items-baseline justify-center sm:justify-start gap-1.5"
+                >
+                  <span
+                    id="modal-price-mxn"
+                    class="text-xl sm:text-2xl font-black text-white font-mono"
+                    >$90 MXN</span
+                  >
+                  <span
+                    id="modal-price-usd"
+                    class="text-xs text-gray-400 font-mono"
+                    >($4.50 USD)</span
+                  >
+                </div>
+              </div>
+              <button
+                onclick="
+                  alert(
+                    '¡Solicitud de pieza recibida! Te contactaremos para coordinar el envío o entrega en taller.',
+                  )
+                "
+                class="px-6 py-3 rounded-xl bg-gradient-to-r from-hotwheels-orange to-hotwheels-yellow text-black font-black uppercase text-xs sm:text-sm shadow-lg shadow-hotwheels-orange/30 text-center"
+                data-i18n="btn_get_asset"
+              >
+                Ordenar Pieza
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+      // Initialize Lucide Icons
+      lucide.createIcons();
+
+      // Language Dictionary
+      let currentLang = "es";
+      const i18n = {
+        es: {
+          nav_shop: "Taller",
+          nav_catalog: "Catálogo de Piezas",
+          nav_estimator: "Cotizador",
+          nav_custom: "Pedidos Especiales",
+          nav_about: "Sobre Nosotros",
+          nav_process: "Proceso",
+          btn_custom: "Pedido Especial",
+          hero_badge: "LABORATORIO 3D DE HOT WHEELS Y AUTOS ESCALA 1:64",
+          hero_title_1: "Piezas Únicas &",
+          hero_title_2: "Tecnología 3D",
+          hero_desc:
+            "Impresión 3D de alta precisión para modificaciones de Hot Wheels, rines 1:64 a medida, body kits, conectores de pistas, rampas y diseño CAD personalizado para coleccionistas y corredores.",
+          hero_cta_catalog: "Ver Catálogo 3D",
+          hero_cta_custom: "Cotizar Pieza Especial",
+          metric_scale: "Escalas Precisas",
+          metric_resin: "Detalle en Resina",
+          metric_parts: "Diseños Disponibles",
+          hero_3d_badge: "VISTA 3D INTERACTIVA",
+          hero_drag_hint: "Arrastra para girar",
+          hero_zoom_hint: "Zoom con la rueda",
+          btn_wireframe: "Estructura",
+          btn_solid: "Cuerpo Sólido",
+          cat_tag: "Catálogo y Tienda 3D",
+          cat_title: "Piezas de Carros y Pistas",
+          cat_subtitle:
+            "Inspecciona modelos en 3D, descarga archivos STL o pide tu pieza impresa lista para instalar.",
+          cat_filter_all: "Todas las Piezas",
+          cat_filter_wheels: "Rines y Llantas 1:64",
+          cat_filter_tracks: "Pistas y Conectores",
+          cat_filter_bodykits: "Widebody Kits y Spoilers",
+          cat_filter_diorama: "Dioramas y Expositores",
+          est_tag: "Calculadora Express",
+          est_title: "Cotizador de Impresión 3D",
+          est_desc:
+            "Calcula al instante el costo de tus piezas para Hot Wheels, adaptadores de pistas o carrocerías custom en Resina SLA de alta definición o filamento PETG/PLA+.",
+          est_feature1_title: "Resina de Alta Definición",
+          est_feature1_desc:
+            "Micro-capas en impresión SLA para rines ultra detallados escala 1:64.",
+          est_feature2_title: "Ajuste Exacto a Pistas",
+          est_feature2_desc:
+            "Compatibilidad 100% garantizada con conectores de pista naranja Hot Wheels.",
+          lbl_material: "Selecciona el Material",
+          lbl_volume: "Volumen / Tamaño Estimado (cm³)",
+          lbl_infill: "Relleno Interno (Resistencia)",
+          lbl_precision: "Nivel de Detalle / Capa",
+          prec_ultra: "0.05mm Ultra Fino",
+          prec_std: "0.16mm Estándar",
+          prec_fast: "0.24mm Pista Veloz",
+          lbl_est_total: "Costo Estimado de Impresión",
+          btn_order_print: "Encargar Pieza",
+          form_tag: "Pedidos Especiales",
+          form_main_title: "Diseño CAD o Impresión Directa",
+          form_main_desc:
+            "¡Cuéntanos tu proyecto! Diseñamos carrocerías a medida, widebody kits, rines especiales o imprimimos tus propios archivos 3D STL/STEP.",
+          tab_option_a: "Opción A: Diseñar Pieza desde Cero",
+          tab_option_b: "Opción B: Imprimir Mi Archivo STL",
+          form_opt_a_title:
+            "Diseñar una Pieza de Carro Personalizada desde Cero",
+          form_opt_a_sub:
+            "Describe tu idea, modificación de Hot Wheels, pista custom o rines. Nuestros diseñadores CAD modelarán la pieza a escala.",
+          lbl_name: "Tu Nombre *",
+          lbl_email: "Correo Electrónico *",
+          lbl_pref_mat: "Material y Acabado Preferido",
+          lbl_target_scale: "Escala del Vehículo",
+          lbl_upload_a:
+            "Fotos de Referencia, Bocetos o Archivos CAD (.STL, .PNG, .PDF)",
+          upload_drag: "Arrastra tus archivos aquí o",
+          upload_browse: "busca en tu equipo",
+          upload_formats:
+            "Formatos permitidos: STL, STEP, OBJ, PNG, JPG, PDF hasta 50MB",
+          lbl_details: "Detalles de la Pieza o Proyecto *",
+          btn_submit_order: "Enviar Solicitud de Cotización",
+          about_tag: "Sobre Nosotros",
+          about_title: "Un Pequeño Taller Haciendo Grandes Sueños Realidad",
+          about_p1:
+            "Somos un equipo súper pequeño de entusiastas de los autos y la tecnología 3D. Nos apasiona la cultura automotriz, las modificaciones de Hot Wheels y la fabricación digital. Cada pieza que imprimimos, desde el rin más diminuto de 1:64 hasta la pista más compleja, la hacemos trabajando duro con dedicación artesanal para dar vida a tus proyectos.",
+          about_p2:
+            "Nos encanta colaborar directamente con coleccionistas, creadores y amantes del automovilismo. No importa si tienes un boceto en papel o un archivo 3D listo; aquí nos aseguramos de que obtengas la mejor calidad con la máxima precisión posible.",
+          shipping_title: "Envíos y Entregas",
+          ship_std_title: "Envío Estándar Nacional",
+          ship_std_price: "+$100 MXN (~$5 USD) adicionales",
+          ship_std_desc:
+            "Enviamos a todo el país empacando cuidadosamente cada pieza con protección antichoque.",
+          ship_free_title: "Envío Gratis Días Especiales",
+          ship_free_desc:
+            "Ofrecemos envío GRATIS en fechas seleccionadas en zonas cercanas a nuestro taller.",
+          ship_pickup_title: "Entrega Gratuita en Taller",
+          ship_pickup_price: "¡$0 MXN - Totalmente Gratis!",
+          ship_pickup_desc:
+            "Puedes recoger tus piezas terminadas directamente en nuestro local sin costo alguno.",
+          proc_tag: "Flujo de Trabajo",
+          proc_title: "Del Garaje Digital a la Pista",
+          proc_desc:
+            "Así es como fabricamos y probamos tus piezas para carros 3D.",
+          step1_title: "Modelado CAD",
+          step1_desc:
+            "Diseño digital 3D de piezas, alerones, ejes de rines y conectores de pista.",
+          step2_title: "Preparación de Impresión",
+          step2_desc:
+            "Configuración de laminado de alta definición para encajes perfectos.",
+          step3_title: "Impresión 3D de Precisión",
+          step3_desc:
+            "Resina SLA a 50 micras o PETG de alta velocidad para pistas exigentes.",
+          step4_title: "Control de Calidad",
+          step4_desc:
+            "Limpieza de soportes, verificación de alineación de ejes y envío o recogida.",
+          footer_brand_desc:
+            "Piezas personalizadas para Hot Wheels, rines escala 1:64, widebody kits e ingeniería 3D para pistas.",
+          footer_menu: "Menú del Taller",
+          footer_specs: "Escalas y Materiales",
+          footer_contact: "Atención al Cliente",
+          modal_inspector: "Inspector 3D de Piezas",
+          modal_target_scale: "Escala Destino:",
+          modal_rec_mat: "Material Recomendado:",
+          modal_print_time: "Tiempo Est. de Impresión:",
+          modal_price_lbl: "Precio de la Pieza",
+          btn_get_asset: "Ordenar Pieza",
+        },
+        en: {
+          nav_shop: "Shop",
+          nav_catalog: "Parts Catalog",
+          nav_estimator: "Estimator",
+          nav_custom: "Custom Orders",
+          nav_about: "About Us",
+          nav_process: "Process",
+          btn_custom: "Custom Car Order",
+          hero_badge: "HOT WHEELS, TRACK PARTS & 1:64 SCALE DIECAST LAB",
+          hero_title_1: "Custom Cars &",
+          hero_title_2: "3D Track Tech",
+          hero_desc:
+            "Precision 3D printed Hot Wheels mods, custom 1:64 scale wheels, widebody kits, race track connectors, booster ramps, and custom CAD body designs tailored for collectors and racers.",
+          hero_cta_catalog: "Explore 3D Car Catalog",
+          hero_cta_custom: "Commission Custom Part",
+          metric_scale: "Scale Precision",
+          metric_resin: "SLA Resin Detail",
+          metric_parts: "Available Designs",
+          hero_3d_badge: "3D GARAGE VIEW",
+          hero_drag_hint: "Drag to inspect car model",
+          hero_zoom_hint: "Scroll to zoom",
+          btn_wireframe: "Wireframe",
+          btn_solid: "Solid Body",
+          cat_tag: "Diecast & Track Store",
+          cat_title: "Hot Wheels & Car Parts Catalog",
+          cat_subtitle:
+            "Inspect 3D car models, download STL files, or buy physical 3D prints ready to tune.",
+          cat_filter_all: "All Speed Items",
+          cat_filter_wheels: "1:64 Custom Wheels & Rims",
+          cat_filter_tracks: "Hot Wheels Tracks & Connectors",
+          cat_filter_bodykits: "Widebody Kits & Spoilers",
+          cat_filter_diorama: "Garage Dioramas & Racks",
+          est_tag: "Pit Stop Calculator",
+          est_title: "Car Part Print Estimator",
+          est_desc:
+            "Calculate instant pricing for your Hot Wheels parts, track adapters, or custom car body shell prints using SLA High-Detail Resin or Durable PETG filament.",
+          est_feature1_title: "High-Speed Resin Details",
+          est_feature1_desc:
+            "Micro-layer SLA printing for ultra-smooth 1:64 wheel spokes and realistic aero parts.",
+          est_feature2_title: "Track Precision Fit",
+          est_feature2_desc:
+            "Guaranteed compatibility with official Hot Wheels orange track connections.",
+          lbl_material: "Select Print Material",
+          lbl_volume: "Volume / Scale Size (cm³)",
+          lbl_infill: "Infill Strength",
+          lbl_precision: "Detail Precision Level",
+          prec_ultra: "0.05mm Ultra Fine",
+          prec_std: "0.16mm Standard",
+          prec_fast: "0.24mm Track Speed",
+          lbl_est_total: "Estimated Custom Print Cost",
+          btn_order_print: "Order This Print",
+          form_tag: "Custom Garage Request",
+          form_main_title: "Order Custom Car Parts & CAD Designs",
+          form_main_desc:
+            "Tell us what your dream Hot Wheels build needs! We design custom 3D car bodies, widebody kits, custom wheels, or 3D print your uploaded CAD files.",
+          tab_option_a: "Option A: Custom 3D Car Design",
+          tab_option_b: "Option B: Print My STL/STEP File",
+          form_opt_a_title: "Design a Custom 3D Car Part from Scratch",
+          form_opt_a_sub:
+            "Describe your car idea, Hot Wheels modifications, custom track layout, or wheel design. Our CAD engineers will model it to scale.",
+          lbl_name: "Your Name *",
+          lbl_email: "Email Address *",
+          lbl_pref_mat: "Preferred Material & Finish",
+          lbl_target_scale: "Diecast Scale Target",
+          lbl_upload_a:
+            "Car Reference Pictures, Sketches, or CAD Files (.STL, .PNG, .PDF)",
+          upload_drag: "Drag and drop car photos or CAD files here, or",
+          upload_browse: "browse files",
+          upload_formats: "Supports STL, STEP, OBJ, PNG, JPG, PDF up to 50MB",
+          lbl_details: "Car Specs & Customization Details *",
+          btn_submit_order: "Submit Custom Car Request",
+          about_tag: "About Us",
+          about_title: "A Super Small Print Shop Making Dreams Come True",
+          about_p1:
+            "We are a super small team of die-hard car and 3D printing enthusiasts. We live and breathe automotive culture, Hot Wheels modding, and digital fabrication. Every piece we print—from the smallest 1:64 rim to complex track ramps—is crafted with hard work and dedication to bring your ideas to life.",
+          about_p2:
+            "We love working directly with collectors, customizers, and racing fans. Whether you have a sketch on a napkin or a finished 3D file, we are here to make sure you get top quality with precision craftsmanship.",
+          shipping_title: "Shipping & Local Pickup",
+          ship_std_title: "Standard Shipping",
+          ship_std_price: "+$100 MXN (~$5 USD) extra",
+          ship_std_desc:
+            "We ship nationwide, carefully packaging every piece with protective padding.",
+          ship_free_title: "Free Local Days Shipping",
+          ship_free_desc:
+            "We offer FREE shipping on select days for nearby addresses.",
+          ship_pickup_title: "Free Workshop Pickup",
+          ship_pickup_price: "$0 MXN - Totally Free!",
+          ship_pickup_desc:
+            "Pick up your printed parts directly at our shop location for free.",
+          proc_tag: "Race-Ready Workflow",
+          proc_title: "From Digital Garage to Fast Track",
+          proc_desc:
+            "How we build, test, and 3D print your custom diecast car parts.",
+          step1_title: "CAD Car Tuning",
+          step1_desc:
+            "3D digital modeling of custom car bodies, spoilers, wheel axles, and Hot Wheels track connectors.",
+          step2_title: "Resin & Filament Prep",
+          step2_desc:
+            "High-resolution slicing for smooth wheel rim spokes and track snap-fit tolerances.",
+          step3_title: "Precision 3D Print",
+          step3_desc:
+            "50-micron SLA resin printing for tiny car details or tough PETG for high-speed track loops.",
+          step4_title: "QC & Track Testing",
+          step4_desc:
+            "Support removal, axle alignment checks, track fit testing, and express shipping or pickup.",
+          footer_brand_desc:
+            "Custom Hot Wheels parts, 1:64 scale diecast wheels, widebody kits, and custom 3D track engineering.",
+          footer_menu: "Garage Menu",
+          footer_specs: "Scales & Materials",
+          footer_contact: "Pit Crew Support",
+          modal_inspector: "3D Car Inspector",
+          modal_target_scale: "Target Scale:",
+          modal_rec_mat: "Recommended Material:",
+          modal_print_time: "Est. Print Time:",
+          modal_price_lbl: "3D Model Price",
+          btn_get_asset: "Get STL Asset",
+        },
+      };
+
+      function switchLanguage(lang) {
+        currentLang = lang;
+        const btnEs = document.getElementById("lang-es");
+        const btnEn = document.getElementById("lang-en");
+
+        if (lang === "es") {
+          btnEs.className =
+            "px-2 py-1 rounded bg-hotwheels-orange text-black font-bold transition";
+          btnEn.className =
+            "px-2 py-1 rounded text-gray-400 hover:text-white transition";
+        } else {
+          btnEn.className =
+            "px-2 py-1 rounded bg-hotwheels-orange text-black font-bold transition";
+          btnEs.className =
+            "px-2 py-1 rounded text-gray-400 hover:text-white transition";
+        }
+
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          const key = el.getAttribute("data-i18n");
+          if (i18n[lang][key]) {
+            el.textContent = i18n[lang][key];
+          }
+        });
+
+        renderCatalog(catalogData);
+      }
+
+      // Mobile Menu Toggle
+      const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+      const mobileMenu = document.getElementById("mobile-menu");
+      mobileMenuBtn.addEventListener("click", () => {
+        mobileMenu.classList.toggle("hidden");
+      });
+
+      /* ===================================================
+           1. HERO THREE.JS INTERACTIVE 3D CAR / RACE SCENE
+        =================================================== */
+      function initHero3D() {
+        const canvas = document.getElementById("hero-3d-canvas");
+        if (!canvas) return;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x090b10);
+
+        const camera = new THREE.PerspectiveCamera(
+          45,
+          canvas.clientWidth / canvas.clientHeight,
+          0.1,
+          1000,
+        );
+        camera.position.set(4, 3, 6);
+
+        const renderer = new THREE.WebGLRenderer({
+          canvas: canvas,
+          antialias: true,
+        });
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // Controls - pass renderer.domElement as second parameter
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+        scene.add(ambientLight);
+
+        const dirLight1 = new THREE.DirectionalLight(0xff5500, 2.5); // Hot Wheels Orange Light
+        dirLight1.position.set(5, 10, 7);
+        scene.add(dirLight1);
+
+        const dirLight2 = new THREE.DirectionalLight(0xffd700, 1.8); // Hot Wheels Yellow Light
+        dirLight2.position.set(-5, -5, -5);
+        scene.add(dirLight2);
+
+        // Create Stylized 3D Car Model Group
+        const carGroup = new THREE.Group();
+
+        // Car Body (Chassis)
+        const bodyGeo = new THREE.BoxGeometry(2.8, 0.6, 1.4);
+        const bodyMat = new THREE.MeshStandardMaterial({
+          color: 0xff5500,
+          metalness: 0.6,
+          roughness: 0.2,
+          wireframe: false,
+        });
+        const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+        bodyMesh.position.y = 0.4;
+        carGroup.add(bodyMesh);
+
+        // Car Cabin Roof
+        const cabinGeo = new THREE.BoxGeometry(1.4, 0.5, 1.1);
+        const cabinMat = new THREE.MeshStandardMaterial({
+          color: 0x10141e,
+          metalness: 0.9,
+          roughness: 0.1,
+        });
+        const cabinMesh = new THREE.Mesh(cabinGeo, cabinMat);
+        cabinMesh.position.set(-0.2, 0.9, 0);
+        carGroup.add(cabinMesh);
+
+        // Rear Wing / Spoiler
+        const spoilerGeo = new THREE.BoxGeometry(0.4, 0.08, 1.5);
+        const spoilerMat = new THREE.MeshStandardMaterial({ color: 0xffd700 });
+        const spoilerMesh = new THREE.Mesh(spoilerGeo, spoilerMat);
+        spoilerMesh.position.set(1.3, 1.0, 0);
+        carGroup.add(spoilerMesh);
+
+        // 4 Wheels
+        const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 24);
+        const wheelMat = new THREE.MeshStandardMaterial({
+          color: 0x1a202c,
+          roughness: 0.5,
+        });
+
+        const positions = [
+          [-0.9, 0.3, 0.75],
+          [0.9, 0.3, 0.75],
+          [-0.9, 0.3, -0.75],
+          [0.9, 0.3, -0.75],
+        ];
+
+        positions.forEach((pos) => {
+          const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+          wheel.rotation.x = Math.PI / 2;
+          wheel.position.set(...pos);
+          carGroup.add(wheel);
+        });
+
+        // Track Base Platform
+        const trackGeo = new THREE.BoxGeometry(6, 0.1, 2.5);
+        const trackMat = new THREE.MeshStandardMaterial({
+          color: 0xff5500,
+          roughness: 0.3,
+        });
+        const trackMesh = new THREE.Mesh(trackGeo, trackMat);
+        trackMesh.position.y = -0.05;
+        carGroup.add(trackMesh);
+
+        scene.add(carGroup);
+
+        // Wireframe / Shaded Toggles
+        document
+          .getElementById("btn-wireframe")
+          .addEventListener("click", () => {
+            bodyMat.wireframe = true;
+            cabinMat.wireframe = true;
+          });
+        document.getElementById("btn-shade").addEventListener("click", () => {
+          bodyMat.wireframe = false;
+          cabinMat.wireframe = false;
+        });
+
+        // Responsive Resizing
+        window.addEventListener("resize", () => {
+          const width = canvas.parentElement.clientWidth;
+          const height = canvas.parentElement.clientHeight;
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+          renderer.setSize(width, height);
+        });
+
+        // Animation Loop
+        function animate() {
+          requestAnimationFrame(animate);
+          carGroup.rotation.y += 0.006;
+          controls.update();
+          renderer.render(scene, camera);
+        }
+        animate();
+      }
+
+      /* ===================================================
+           2. CATALOG DATA FOR HOT WHEELS & CAR PARTS
+        =================================================== */
+      const catalogData = [
+        {
+          id: "1",
+          title_es: "Juego de Rines 1:64 Escala Deep Dish",
+          title_en: "1:64 Custom Deep Dish Rim Set",
+          category: "wheels",
+          price_mxn: "$90 MXN",
+          price_usd: "$4.50 USD",
+          material_es: "Resina SLA Micro Detalle",
+          material_en: "SLA Micro Resin",
+          desc_es:
+            "Juego de 4 rines deportivos ultra detallados con llantas de goma para swaps en Hot Wheels.",
+          desc_en:
+            "Set of 4 ultra-detailed 5-spoke custom rims with rubber tires for Hot Wheels diecast swaps.",
+          shape: "wheel",
+        },
+        {
+          id: "2",
+          title_es: "Conector de Pista de Alta Velocidad",
+          title_en: "High-Speed Track Loop Connector",
+          category: "tracks",
+          price_mxn: "$160 MXN",
+          price_usd: "$8.00 USD",
+          material_es: "PLA+ Naranja Pista",
+          material_en: "PLA+ Orange",
+          desc_es:
+            "Puente conector doble para rieles diseñado para máxima estabilidad en curvas y looping.",
+          desc_en:
+            "Dual-lane track bridge connector designed for maximum stunt loop speed stability.",
+          shape: "track",
+        },
+        {
+          id: "3",
+          title_es: "Widebody Kit Estilo JDM para 1:64",
+          title_en: "JDM Rocket Widebody Kit for 1:64",
+          category: "bodykits",
+          price_mxn: "$130 MXN",
+          price_usd: "$6.50 USD",
+          material_es: "Resina SLA",
+          material_en: "SLA Resin",
+          desc_es:
+            "Fenders ensanchados, splitter delantero y difusor trasero para tuning de autos escala.",
+          desc_en:
+            "Snap-fit bolt-on wide fenders, front splitter, and rear diffuser for Hot Wheels tuners.",
+          shape: "body",
+        },
+        {
+          id: "4",
+          title_es: "Estantería / Diorama de Garaje 1:64",
+          title_en: "1:64 Scale Garage Pit Stop Rack",
+          category: "diorama",
+          price_mxn: "$280 MXN",
+          price_usd: "$14.00 USD",
+          material_es: "PLA+ Negro Mate",
+          material_en: "PLA+ Black",
+          desc_es:
+            "Expositor modular con capacidad para 12 autos Hot Wheels con detalles de taller.",
+          desc_en:
+            "Modular display rack holds up to 12 Hot Wheels cars with realistic mechanic tool details.",
+          shape: "rack",
+        },
+        {
+          id: "5",
+          title_es: "Motor Twin-Turbo V8 para Swaps",
+          title_en: "Twin-Turbo V8 Engine Bay Swap",
+          category: "bodykits",
+          price_mxn: "$100 MXN",
+          price_usd: "$5.00 USD",
+          material_es: "Resina SLA Ultra Detalle",
+          material_en: "SLA Micro Resin",
+          desc_es:
+            "Bloque de motor V8 a escala para instalar en capós abiertos de carros personalizados.",
+          desc_en:
+            "Micro-detailed V8 engine block designed to drop into open-hood custom Hot Wheels builds.",
+          shape: "engine",
+        },
+        {
+          id: "6",
+          title_es: "Rampa de Curva 90° para Pistas",
+          title_en: "Gravity Drop 90° Curved Track Ramp",
+          category: "tracks",
+          price_mxn: "$190 MXN",
+          price_usd: "$9.50 USD",
+          material_es: "PETG Alta Resistencia",
+          material_en: "PETG Heavy Duty",
+          desc_es:
+            "Módulo de esquina peraltado para mantener la aceleración en pistas estándar de Hot Wheels.",
+          desc_en:
+            "Smooth banked 90-degree corner module compatible with standard Hot Wheels orange tracks.",
+          shape: "curve",
+        },
+      ];
+
+      function renderCatalog(items) {
+        const grid = document.getElementById("catalog-grid");
+        grid.innerHTML = "";
+
+        items.forEach((item) => {
+          const title = currentLang === "es" ? item.title_es : item.title_en;
+          const desc = currentLang === "es" ? item.desc_es : item.desc_en;
+          const mat =
+            currentLang === "es" ? item.material_es : item.material_en;
+          const inspectText =
+            currentLang === "es" ? "Ver Modelo 3D" : "Inspect 3D Model";
+          const matText = currentLang === "es" ? "Material:" : "Material:";
+
+          const card = document.createElement("div");
+          card.className =
+            "glass-panel glass-panel-hover rounded-2xl p-5 border border-white/10 flex flex-col justify-between relative group";
+
+          card.innerHTML = `
+                    <div>
+                        <!-- Canvas Container for 3D Mini Model -->
+                        <div class="w-full h-48 bg-dark-900 rounded-xl overflow-hidden relative mb-4">
+                            <canvas id="card-canvas-${item.id}" class="w-full h-full"></canvas>
+                            <span class="absolute top-3 left-3 text-[10px] font-mono px-2 py-1 rounded bg-dark-800/90 text-hotwheels-orange border border-hotwheels-orange/30 font-bold uppercase">
+                                ${item.category}
+                            </span>
+                        </div>
+
+                        <h3 class="text-lg font-black text-white group-hover:text-hotwheels-orange transition mb-1 uppercase italic">${title}</h3>
+                        <p class="text-xs text-gray-400 line-clamp-2 mb-4">${desc}</p>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between text-xs pt-3 border-t border-white/10 mb-4">
+                            <span class="text-gray-400">${matText} <strong class="text-gray-200 font-mono">${mat}</strong></span>
+                            <div class="text-right">
+                                <span class="text-base font-black font-mono text-white block">${item.price_mxn}</span>
+                                <span class="text-[10px] font-mono text-gray-400">(${item.price_usd})</span>
+                            </div>
+                        </div>
+
+                        <button onclick="openModal('${item.id}')" class="w-full py-2.5 rounded-xl bg-dark-800 hover:bg-hotwheels-orange hover:text-black border border-white/10 text-xs font-black uppercase text-gray-200 transition flex items-center justify-center gap-2">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                            <span>${inspectText}</span>
+                        </button>
+                    </div>
+                `;
+
+          grid.appendChild(card);
+
+          // Initialize Mini Three.js Viewport for each Card
+          setTimeout(
+            () => initCard3DCanvas(`card-canvas-${item.id}`, item.shape),
+            50,
+          );
+        });
+
+        lucide.createIcons();
+      }
+
+      // Mini 3D Renderer for Catalog Cards
+      function initCard3DCanvas(canvasId, shapeType) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x090b10);
+
+        const camera = new THREE.PerspectiveCamera(
+          50,
+          canvas.clientWidth / canvas.clientHeight,
+          0.1,
+          100,
+        );
+        camera.position.z = 3;
+
+        const renderer = new THREE.WebGLRenderer({
+          canvas: canvas,
+          antialias: true,
+        });
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+
+        // Lighting
+        const light = new THREE.DirectionalLight(0xff5500, 2.5);
+        light.position.set(2, 4, 3);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+        // Select Geometry for Car / Track Items
+        let geo;
+        let color = 0xff5500;
+        switch (shapeType) {
+          case "wheel":
+            geo = new THREE.CylinderGeometry(0.8, 0.8, 0.4, 24);
+            color = 0xffd700;
+            break;
+          case "track":
+            geo = new THREE.BoxGeometry(1.8, 0.15, 0.8);
+            color = 0xff5500;
+            break;
+          case "body":
+            geo = new THREE.BoxGeometry(1.6, 0.5, 0.9);
+            color = 0xff5500;
+            break;
+          case "rack":
+            geo = new THREE.BoxGeometry(1.4, 1.2, 0.4);
+            color = 0x1a202c;
+            break;
+          case "engine":
+            geo = new THREE.DodecahedronGeometry(0.7);
+            color = 0xffd700;
+            break;
+          default:
+            geo = new THREE.TorusGeometry(0.8, 0.25, 16, 32);
+        }
+
+        const mat = new THREE.MeshStandardMaterial({
+          color: color,
+          wireframe: true,
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        if (shapeType === "wheel") mesh.rotation.x = Math.PI / 2;
+        scene.add(mesh);
+
+        function animateCard() {
+          requestAnimationFrame(animateCard);
+          mesh.rotation.y += 0.012;
+          renderer.render(scene, camera);
+        }
+        animateCard();
+      }
+
+      /* ===================================================
+           3. INSTANT ESTIMATOR CALCULATOR LOGIC
+        =================================================== */
+      function initEstimator() {
+        const matSelect = document.getElementById("est-material");
+        const volInput = document.getElementById("est-volume");
+        const infillInput = document.getElementById("est-infill");
+        const infillVal = document.getElementById("est-infill-val");
+        const totalPriceMxn = document.getElementById("est-total-price-mxn");
+        const totalPriceUsd = document.getElementById("est-total-price-usd");
+        const layerBtns = document.querySelectorAll(".est-layer-btn");
+
+        let selectedLayerMult = 1.0;
+
+        function calculateCost() {
+          const matRate = parseFloat(matSelect.value) / 100;
+          const volume = parseFloat(volInput.value) || 10;
+          const infill = parseInt(infillInput.value) / 100;
+
+          const baseMaterialCost = volume * matRate * (0.4 + infill * 0.6);
+          const setupFeeUsd = 6.0; // Base setup fee for car prints
+          const finalTotalUsd =
+            setupFeeUsd + baseMaterialCost * selectedLayerMult * 2.8;
+          const finalTotalMxn = finalTotalUsd * 20; // 1 USD = ~20 MXN conversion
+
+          totalPriceMxn.textContent = `$${Math.round(finalTotalMxn)} MXN`;
+          totalPriceUsd.textContent = `($${finalTotalUsd.toFixed(2)} USD)`;
+          infillVal.textContent = `${infillInput.value}%`;
+        }
+
+        layerBtns.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            layerBtns.forEach((b) =>
+              b.classList.remove(
+                "active",
+                "border-hotwheels-orange",
+                "text-hotwheels-orange",
+              ),
+            );
+            btn.classList.add(
+              "active",
+              "border-hotwheels-orange",
+              "text-hotwheels-orange",
+            );
+            selectedLayerMult = parseFloat(btn.dataset.mult);
+            calculateCost();
+          });
+        });
+
+        matSelect.addEventListener("change", calculateCost);
+        volInput.addEventListener("input", calculateCost);
+        infillInput.addEventListener("input", calculateCost);
+
+        calculateCost();
+      }
+
+      /* ===================================================
+           4. CUSTOM ORDER FORM TAB TOGGLING
+        =================================================== */
+      function initFormTabs() {
+        const tabDesign = document.getElementById("tab-design");
+        const tabPrint = document.getElementById("tab-print");
+        const formTitle = document.getElementById("form-title");
+        const formSubtitle = document.getElementById("form-subtitle");
+        const uploadLabel = document.getElementById("upload-label");
+
+        tabDesign.addEventListener("click", () => {
+          tabDesign.className =
+            "px-6 py-3 rounded-xl text-sm font-extrabold transition flex items-center gap-2 bg-hotwheels-orange text-black shadow-lg shadow-hotwheels-orange/30";
+          tabPrint.className =
+            "px-6 py-3 rounded-xl text-sm font-extrabold transition flex items-center gap-2 text-gray-400 hover:text-white";
+
+          const titleText =
+            currentLang === "es"
+              ? "Diseñar una Pieza de Carro Personalizada desde Cero"
+              : "Design a Custom 3D Car Part from Scratch";
+          const subText =
+            currentLang === "es"
+              ? "Describe tu idea, modificación de Hot Wheels, pista custom o rines. Nuestros diseñadores CAD modelarán la pieza a escala."
+              : "Describe your car idea, Hot Wheels modifications, custom track layout, or wheel design. Our CAD engineers will model it to scale.";
+          const upText =
+            currentLang === "es"
+              ? "Fotos de Referencia, Bocetos o Archivos CAD (.STL, .PNG, .PDF)"
+              : "Car Reference Pictures, Sketches, or CAD Files (.STL, .PNG, .PDF)";
+
+          formTitle.innerHTML = `<i data-lucide="pen-tool" class="w-5 h-5 text-hotwheels-orange"></i> ${titleText}`;
+          formSubtitle.textContent = subText;
+          uploadLabel.textContent = upText;
+          lucide.createIcons();
+        });
+
+        tabPrint.addEventListener("click", () => {
+          tabPrint.className =
+            "px-6 py-3 rounded-xl text-sm font-extrabold transition flex items-center gap-2 bg-hotwheels-orange text-black shadow-lg shadow-hotwheels-orange/30";
+          tabDesign.className =
+            "px-6 py-3 rounded-xl text-sm font-extrabold transition flex items-center gap-2 text-gray-400 hover:text-white";
+
+          const titleText =
+            currentLang === "es"
+              ? "Impresión Directa de Pieza de Carro"
+              : "Direct Car Part 3D Printing";
+          const subText =
+            currentLang === "es"
+              ? "Sube tus archivos CAD pre-diseñados de piezas de autos para impresión SLA/FDM instantánea y envío."
+              : "Upload your pre-designed car part CAD files for instant SLA/FDM 3D printing and shipping.";
+          const upText =
+            currentLang === "es"
+              ? "Subir Archivos 3D de Carros (.STL, .STEP, .OBJ)"
+              : "Upload 3D Car Model Files (.STL, .STEP, .OBJ)";
+
+          formTitle.innerHTML = `<i data-lucide="printer" class="w-5 h-5 text-hotwheels-orange"></i> ${titleText}`;
+          formSubtitle.textContent = subText;
+          uploadLabel.textContent = upText;
+          lucide.createIcons();
+        });
+      }
+
+      function handleFormSubmit() {
+        const msg =
+          currentLang === "es"
+            ? "¡Rum rum! Tu solicitud de proyecto custom ha sido enviada a nuestro equipo del taller 3D. Revisaremos tus specs y te enviaremos la cotización en menos de 12 horas."
+            : "Vroom! Your custom car project request has been submitted to our 3D garage team. We will review your specs and send a quote within 12 hours!";
+        alert(msg);
+      }
+
+      /* ===================================================
+           5. MODAL PREVIEW INITIALIZATION
+        =================================================== */
+      const modal = document.getElementById("model-modal");
+      const closeModalBtn = document.getElementById("close-modal-btn");
+
+      function openModal(id) {
+        const item = catalogData.find((i) => i.id === id);
+        if (!item) return;
+
+        document.getElementById("modal-title").textContent =
+          currentLang === "es" ? item.title_es : item.title_en;
+        document.getElementById("modal-category").textContent = item.category;
+        document.getElementById("modal-desc").textContent =
+          currentLang === "es" ? item.desc_es : item.desc_en;
+        document.getElementById("modal-material").textContent =
+          currentLang === "es" ? item.material_es : item.material_en;
+        document.getElementById("modal-price-mxn").textContent = item.price_mxn;
+        document.getElementById("modal-price-usd").textContent =
+          `(${item.price_usd})`;
+
+        modal.classList.remove("hidden");
+        setTimeout(() => initCard3DCanvas("modal-3d-canvas", item.shape), 50);
+      }
+
+      closeModalBtn.addEventListener("click", () => {
+        modal.classList.add("hidden");
+      });
+
+      // Category Filter Functionality
+      document.querySelectorAll(".catalog-filter-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".catalog-filter-btn").forEach((b) => {
+            b.classList.remove(
+              "bg-hotwheels-orange",
+              "text-black",
+              "shadow-lg",
+            );
+            b.classList.add("glass-panel", "text-gray-300");
+          });
+          btn.classList.add("bg-hotwheels-orange", "text-black", "shadow-lg");
+          btn.classList.remove("glass-panel", "text-gray-300");
+
+          const cat = btn.dataset.category;
+          if (cat === "all") {
+            renderCatalog(catalogData);
+          } else {
+            const filtered = catalogData.filter(
+              (item) => item.category === cat,
+            );
+            renderCatalog(filtered);
+          }
+        });
+      });
+
+      // Search Filter Logic
+      document
+        .getElementById("catalog-search")
+        .addEventListener("input", (e) => {
+          const val = e.target.value.toLowerCase();
+          const filtered = catalogData.filter(
+            (item) =>
+              item.title_es.toLowerCase().includes(val) ||
+              item.title_en.toLowerCase().includes(val) ||
+              item.desc_es.toLowerCase().includes(val) ||
+              item.desc_en.toLowerCase().includes(val),
+          );
+          renderCatalog(filtered);
+        });
+
+      // Initialize Everything on Load
+      window.onload = function () {
+        initHero3D();
+        switchLanguage("es");
+        initEstimator();
+        initFormTabs();
+      };
+    </script>
+  </body>
+</html>
