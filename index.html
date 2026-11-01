@@ -57,6 +57,7 @@
     <!-- Three.js CDN -->
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
 
     <style>
       body {
@@ -479,7 +480,7 @@
                   ></span>
                   <span
                     class="ml-1 text-[10px] sm:text-xs font-mono text-gray-300 font-bold truncate max-w-[140px] sm:max-w-none"
-                    >CHASIS_CARRO_3D.STEP</span
+                    >Garage_Japones.stl</span
                   >
                 </div>
                 <span
@@ -1049,6 +1050,7 @@
                 Fotos de Referencia, Bocetos o Archivos CAD (.STL, .PNG, .PDF)
               </label>
               <div
+                id="upload-dropzone"
                 class="border-2 border-dashed border-hotwheels-orange/30 rounded-2xl p-6 sm:p-8 text-center bg-dark-900/50 hover:bg-dark-900 hover:border-hotwheels-orange transition cursor-pointer group"
               >
                 <i
@@ -1071,6 +1073,35 @@
                 >
                   Formatos permitidos: STL, STEP, OBJ, PNG, JPG, PDF hasta 50MB
                 </p>
+              </div>
+              <input
+                type="file"
+                id="upload-file-input"
+                accept=".stl,.step,.stp,.obj,.png,.jpg,.jpeg,.pdf"
+                class="hidden"
+              />
+
+              <!-- Live 3D preview + status, shown once a file is picked -->
+              <div id="upload-preview-wrap" class="hidden mt-3">
+                <div
+                  id="upload-preview-3d"
+                  class="hidden w-full h-40 sm:h-48 bg-dark-900 rounded-xl overflow-hidden relative border border-white/10"
+                >
+                  <canvas id="upload-preview-canvas" class="w-full h-full"></canvas>
+                </div>
+                <div
+                  id="upload-status"
+                  class="flex items-center justify-between gap-3 text-xs font-mono text-gray-300 bg-dark-900/80 border border-white/10 rounded-xl px-3 py-2 mt-2"
+                >
+                  <span id="upload-status-text"></span>
+                  <button
+                    type="button"
+                    id="upload-remove-btn"
+                    class="text-gray-400 hover:text-hotwheels-orange transition shrink-0"
+                  >
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1935,6 +1966,11 @@
       const FRAME_MS = IS_MOBILE ? 1000 / 30 : 1000 / 60; // cap fps on phones
       const MAX_DPR = IS_MOBILE ? 1.25 : 2;
 
+      // 👉 Put the path to a real .stl here to swap it in for the hero's
+      // placeholder car (e.g. "models/hero-car.stl"). Leave "" to keep
+      // the placeholder.
+      const HERO_STL_URL = "models/hexdisplay.stl";
+
       function initHero3D() {
         const canvas = document.getElementById("hero-3d-canvas");
         if (!canvas) return;
@@ -1990,11 +2026,13 @@
 
         const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, IS_MOBILE ? 16 : 24);
         const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1a202c, roughness: 0.5 });
+        const wheelMeshes = [];
         [[-0.9, 0.3, 0.75], [0.9, 0.3, 0.75], [-0.9, 0.3, -0.75], [0.9, 0.3, -0.75]].forEach((pos) => {
           const wheel = new THREE.Mesh(wheelGeo, wheelMat);
           wheel.rotation.x = Math.PI / 2;
           wheel.position.set(...pos);
           carGroup.add(wheel);
+          wheelMeshes.push(wheel);
         });
 
         const track = new THREE.Mesh(
@@ -2004,6 +2042,46 @@
         track.position.y = -0.05;
         carGroup.add(track);
         scene.add(carGroup);
+
+        // Swap the placeholder car for a real hardcoded STL, if one is set.
+        if (HERO_STL_URL) {
+          new THREE.STLLoader().load(
+            HERO_STL_URL,
+            (geometry) => {
+              geometry.center();
+              geometry.computeVertexNormals();
+              geometry.computeBoundingSphere();
+              const radius = geometry.boundingSphere ? geometry.boundingSphere.radius : 1;
+              const scale = radius > 0 ? 1.6 / radius : 1;
+
+              const realMat = new THREE.MeshStandardMaterial({
+                color: 0xff5500,
+                metalness: 0.5,
+                roughness: 0.35,
+              });
+              const realMesh = new THREE.Mesh(geometry, realMat);
+              realMesh.scale.setScalar(scale);
+              realMesh.rotation.x = -Math.PI / 2; // typical STL export is Z-up
+
+              // Hide the placeholder primitives, show the real model.
+              bodyMesh.visible = false;
+              cabinMesh.visible = false;
+              spoilerMesh.visible = false;
+              track.visible = false;
+              wheelMeshes.forEach((w) => (w.visible = false));
+              carGroup.add(realMesh);
+
+              document.getElementById("btn-wireframe").addEventListener("click", () => {
+                realMat.wireframe = true;
+              });
+              document.getElementById("btn-shade").addEventListener("click", () => {
+                realMat.wireframe = false;
+              });
+            },
+            undefined,
+            (err) => console.error("No se pudo cargar HERO_STL_URL:", HERO_STL_URL, err),
+          );
+        }
 
         document.getElementById("btn-wireframe").addEventListener("click", () => {
           bodyMat.wireframe = true;
@@ -2107,24 +2185,77 @@
         p.ctx.drawImage(r.domElement, 0, 0);
       }
 
-      function addPreview(canvas, shapeType, owner) {
+      // Cache parsed STL geometries so switching card <-> modal, or
+      // re-rendering the grid, never re-downloads/re-parses the same file.
+      const stlGeometryCache = new Map();
+      let stlLoader = null;
+
+      function addPreview(canvas, shapeType, owner, stlUrl) {
         if (!canvas) return null;
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x090b10);
         const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
         camera.position.z = 3;
         const { geo, color } = makeShape(shapeType);
-        const mat = new THREE.MeshBasicMaterial({ color, wireframe: true });
+        const mat = new THREE.MeshBasicMaterial({ color: 0xff5500, wireframe: true });
         const mesh = new THREE.Mesh(geo, mat);
         if (shapeType === "wheel") mesh.rotation.x = Math.PI / 2;
         scene.add(mesh);
         const p = { canvas, ctx: canvas.getContext("2d"), scene, camera, mesh, geo, mat, owner, visible: true, w: 1, h: 1 };
         measurePreview(p);
         previews.add(p);
-        renderPreview(p); // first frame immediately
+        renderPreview(p); // placeholder shape renders immediately, no flash of empty canvas
+
+        // Hardcoded real product STL: swap the placeholder for it once it loads.
+        if (stlUrl) loadRealStl(p, stlUrl);
+
         previewObserver.observe(canvas);
         kickPreviews();
         return p;
+      }
+
+      function loadRealStl(p, url) {
+        const swap = (geometry) => {
+          if (!previews.has(p)) return; // card/modal was closed before it finished loading
+          scene_swapGeometry(p, geometry);
+        };
+        const cached = stlGeometryCache.get(url);
+        if (cached) {
+          swap(cached);
+          return;
+        }
+        if (!stlLoader) stlLoader = new THREE.STLLoader();
+        stlLoader.load(
+          url,
+          (geometry) => {
+            geometry.center();
+            geometry.computeVertexNormals();
+            stlGeometryCache.set(url, geometry);
+            swap(geometry);
+          },
+          undefined,
+          (err) => console.error("No se pudo cargar el STL:", url, err),
+        );
+      }
+
+      function scene_swapGeometry(p, geometry) {
+        p.scene.remove(p.mesh);
+        p.geo.dispose();
+        p.mat.dispose();
+        geometry.computeBoundingSphere();
+        const radius = geometry.boundingSphere ? geometry.boundingSphere.radius : 1;
+        const scale = radius > 0 ? 1.1 / radius : 1;
+        p.mat = new THREE.MeshStandardMaterial({ color: 0xff5500, metalness: 0.5, roughness: 0.35 });
+        p.scene.add(new THREE.AmbientLight(0xffffff, 1.1));
+        const light = new THREE.DirectionalLight(0xffffff, 1.8);
+        light.position.set(3, 5, 4);
+        p.scene.add(light);
+        p.mesh = new THREE.Mesh(geometry, p.mat);
+        p.mesh.scale.setScalar(scale);
+        p.mesh.rotation.x = -Math.PI / 2; // typical STL export is Z-up
+        p.geo = geometry;
+        p.scene.add(p.mesh);
+        renderPreview(p);
       }
 
       function removePreview(p) {
@@ -2187,6 +2318,7 @@
           desc_en:
             "Set of 4 ultra-detailed 5-spoke custom rims with rubber tires for Hot Wheels diecast swaps.",
           shape: "wheel",
+          stl: "", // hardcode a real .stl/.glb path here when you have the asset
         },
         {
           id: "2",
@@ -2202,6 +2334,7 @@
           desc_en:
             "Dual-lane track bridge connector designed for maximum stunt loop speed stability.",
           shape: "track",
+          stl: "", // hardcode a real .stl/.glb path here when you have the asset
         },
         {
           id: "3",
@@ -2217,6 +2350,7 @@
           desc_en:
             "Snap-fit bolt-on wide fenders, front splitter, and rear diffuser for Hot Wheels tuners.",
           shape: "body",
+          stl: "", // hardcode a real .stl/.glb path here when you have the asset
         },
         {
           id: "4",
@@ -2232,6 +2366,7 @@
           desc_en:
             "Modular display rack holds up to 12 Hot Wheels cars with realistic mechanic tool details.",
           shape: "rack",
+          stl: "", // hardcode a real .stl/.glb path here when you have the asset
         },
         {
           id: "5",
@@ -2247,6 +2382,7 @@
           desc_en:
             "Micro-detailed V8 engine block designed to drop into open-hood custom Hot Wheels builds.",
           shape: "engine",
+          stl: "", // hardcode a real .stl/.glb path here when you have the asset
         },
         {
           id: "6",
@@ -2262,6 +2398,7 @@
           desc_en:
             "Smooth banked 90-degree corner module compatible with standard Hot Wheels orange tracks.",
           shape: "curve",
+          stl: "", // hardcode a real .stl/.glb path here when you have the asset
         },
       ];
 
@@ -2316,7 +2453,7 @@
           grid.appendChild(card);
 
           requestAnimationFrame(() =>
-            addPreview(card.querySelector("canvas"), item.shape, "catalog"),
+            addPreview(card.querySelector("canvas"), item.shape, "catalog", item.stl),
           );
         });
 
@@ -2446,6 +2583,113 @@
             ? "¡Rum rum! Tu solicitud de proyecto custom ha sido enviada a nuestro equipo del taller 3D. Revisaremos tus specs y te enviaremos la cotización en menos de 12 horas."
             : "Vroom! Your custom car project request has been submitted to our 3D garage team. We will review your specs and send a quote within 12 hours!";
         alert(msg);
+        resetUploadBox();
+      }
+
+      /* ===================================================
+           4b. CUSTOM QUOTE FILE UPLOAD (client's own .STL)
+           Live 3D preview via the shared renderer when it's
+           an .stl; other allowed formats just get listed.
+        =================================================== */
+      let uploadPreview = null;
+
+      function resetUploadBox() {
+        removePreview(uploadPreview);
+        uploadPreview = null;
+        document.getElementById("upload-preview-wrap").classList.add("hidden");
+        document.getElementById("upload-preview-3d").classList.add("hidden");
+        document.getElementById("upload-file-input").value = "";
+      }
+
+      function setUploadStatus(text) {
+        document.getElementById("upload-status-text").textContent = text;
+        document.getElementById("upload-preview-wrap").classList.remove("hidden");
+      }
+
+      function handlePickedFile(file) {
+        if (!file) return;
+        removePreview(uploadPreview);
+        uploadPreview = null;
+        const preview3d = document.getElementById("upload-preview-3d");
+        const sizeTxt = (file.size / 1024).toFixed(0) + " KB";
+        const isStl = /\.stl$/i.test(file.name);
+
+        if (!isStl) {
+          preview3d.classList.add("hidden");
+          setUploadStatus(file.name + " · " + sizeTxt);
+          return;
+        }
+
+        preview3d.classList.remove("hidden");
+        setUploadStatus(
+          (currentLang === "es" ? "Cargando vista previa… " : "Loading preview… ") +
+            file.name,
+        );
+
+        const reader = new FileReader();
+        reader.onerror = () =>
+          setUploadStatus(
+            (currentLang === "es" ? "No se pudo leer el archivo: " : "Could not read file: ") +
+              file.name,
+          );
+        reader.onload = (ev) => {
+          let geometry;
+          try {
+            geometry = new THREE.STLLoader().parse(ev.target.result);
+          } catch (err) {
+            console.error(err);
+            preview3d.classList.add("hidden");
+            setUploadStatus(
+              (currentLang === "es" ? "STL inválido: " : "Invalid STL: ") + file.name,
+            );
+            return;
+          }
+          geometry.center();
+          geometry.computeVertexNormals();
+          uploadPreview = addPreview(
+            document.getElementById("upload-preview-canvas"),
+            "engine", // unused fallback shape; replaced the instant the geometry is set below
+            "custom-order",
+          );
+          if (uploadPreview) scene_swapGeometry(uploadPreview, geometry);
+          setUploadStatus(file.name + " ✓ · " + sizeTxt);
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      function initUploadBox() {
+        const dropzone = document.getElementById("upload-dropzone");
+        const input = document.getElementById("upload-file-input");
+        const removeBtn = document.getElementById("upload-remove-btn");
+
+        dropzone.addEventListener("click", () => input.click());
+        input.addEventListener("change", (e) => handlePickedFile(e.target.files[0]));
+
+        ["dragover", "dragenter"].forEach((evt) =>
+          dropzone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            dropzone.classList.add("border-hotwheels-orange");
+          }),
+        );
+        ["dragleave", "dragend"].forEach((evt) =>
+          dropzone.addEventListener(evt, () =>
+            dropzone.classList.remove("border-hotwheels-orange"),
+          ),
+        );
+        dropzone.addEventListener("drop", (e) => {
+          e.preventDefault();
+          dropzone.classList.remove("border-hotwheels-orange");
+          const file = e.dataTransfer.files[0];
+          if (file) {
+            input.files = e.dataTransfer.files;
+            handlePickedFile(file);
+          }
+        });
+
+        removeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          resetUploadBox();
+        });
       }
 
       /* ===================================================
@@ -2473,7 +2717,7 @@
         modal.classList.remove("hidden");
         requestAnimationFrame(() => {
           removePreview(modalPreview);
-          modalPreview = addPreview(document.getElementById("modal-3d-canvas"), item.shape, "modal");
+          modalPreview = addPreview(document.getElementById("modal-3d-canvas"), item.shape, "modal", item.stl);
         });
       }
 
@@ -2531,6 +2775,7 @@
         switchLanguage("es");
         initEstimator();
         initFormTabs();
+        initUploadBox();
       });
     </script>
   </body>
